@@ -1,27 +1,14 @@
 import json
 import random
+import optparse
+import pickle
+from redis import StrictRedis
 
 from flask import Flask, request, render_template, jsonify
 import numpy as np
 
 app = Flask(__name__)
-
-
-def read_model(path):
-    model = {}
-    for line in open(path):
-        if not line:
-            continue
-        splitted = line.split()
-        token = splitted[0]
-        dims = map(float, splitted[1:])
-        dims = np.array(list(dims), dtype=np.float32)
-        model[token] = dims
-    return model
-
-
-embedding_model = read_model('small.txt')
-
+embedding_model = None
 
 def cos_sim(a, b):
     """Takes 2 vectors a, b and returns the cosine similarity according
@@ -34,7 +21,7 @@ def cos_sim(a, b):
 
 
 def get_embedding(word):
-    return embedding_model.get(word)
+    return embedding_model.get(word.lower())
 
 
 @app.route('/')
@@ -66,7 +53,7 @@ def p_value(X, Y, A, B):
     union = X + Y
     total_sum = sum(union)
     half = int(len(union) / 2)
-    EXPS = 10000
+    EXPS = 100000
     true_exps = 0
     random.seed(32)
     for i in range(EXPS):
@@ -87,5 +74,104 @@ def association_test():
     return str(p_value(X, Y, A, B))
 
 
+def flaskrun(app):
+    """
+    Takes a flask.Flask instance and runs it. Parses
+    command-line flags to configure the app.
+    """
+    global embedding_model
+    global redis_client
+
+    default_host = "127.0.0.1"
+    default_port = "5000"
+    default_storage = 'in_memory'
+    default_redis_url = 'redis://localhost:6379/'
+
+    # Set up the command-line options
+    parser = optparse.OptionParser()
+    parser.add_option("-H", "--host",
+                      help="Hostname of the Flask app " + \
+                           "[default %s]" % default_host,
+                      default=default_host)
+    parser.add_option("-P", "--port",
+                      help="Port for the Flask app " + \
+                           "[default %s]" % default_port,
+                      default=default_port)
+
+    parser.add_option("-S", "--storage",
+                      help="Which storage to use. in_memory or redis" + \
+                           "[default %s]" % default_storage,
+                      default=default_storage, choices=['in_memory', 'redis'])
+
+    parser.add_option("-V", "--vectors",
+                      help="Path to embedding file")
+
+    parser.add_option("--fill-redis", action="store_true", dest="fill_redis",
+                      help="Only fill the redis database and exit", )
+
+    parser.add_option("--redis-url",
+                      help="Redis database url " + \
+                           "[default %s]" % default_redis_url, default=default_redis_url)
+
+    options, _ = parser.parse_args()
+
+    if options.storage == 'in_memory':
+        print('Using in memory')
+
+        def read_model(path):
+            model = {}
+            for line in open(path):
+                if not line:
+                    continue
+                splitted = line.split()
+                token = splitted[0]
+                dims = map(float, splitted[1:])
+                dims = np.array(list(dims), dtype=np.float32)
+                model[token] = dims
+            return model
+
+        if options.vectors is None:
+            print('Please specify embedding vectors path')
+            parser.print_help()
+            return None
+        embedding_model = read_model(options.vectors)
+    else:
+        print('Using Redis %s' % options.redis_url)
+        redis_client = StrictRedis.from_url(options.redis_url)
+        if options.fill_redis:
+            if options.vectors is None:
+                print('Please specify embedding vectors path')
+                parser.print_help()
+                return None
+            print('Filling redis')
+            token_count = 0
+            for line in open(options.vectors):
+                if not line:
+                    continue
+                splitted = line.split()
+                token = splitted[0]
+                dims = list(map(float, splitted[1:]))
+                redis_client.set(token, pickle.dumps(dims))
+                token_count += 1
+                if token_count % 10000 == 0:
+                    print('Processed %d words' % token_count)
+            print('Finished filling redis with %d words' % token_count)
+            return None
+        else:
+            class RedisStorage(object):
+                def get(self, word):
+                    result = redis_client.get(word)
+                    if result:
+                        result = pickle.loads(result)
+                    return result
+
+            embedding_model = RedisStorage()
+
+    app.run(
+        host=options.host,
+        port=int(options.port)
+    )
+
+
 if __name__ == '__main__':
-    app.run()
+    flaskrun(app)
