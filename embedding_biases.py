@@ -71,7 +71,7 @@ def association_test():
     Y = list(map(get_embedding, request_json['target_Y']))
     A = list(map(get_embedding, request_json['attribute_A']))
     B = list(map(get_embedding, request_json['attribute_B']))
-    return str(p_value(X, Y, A, B))
+    return 'p value is %.6f' % p_value(X, Y, A, B)
 
 
 def flaskrun(app):
