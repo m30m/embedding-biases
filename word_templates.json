@@ -1,0 +1,26 @@
+{
+  "Science & Arts": {
+    "#target_X_words": "science, technology, physics, chemistry, experiment, astronomy",
+    "#target_Y_words": "poetry, art, dance, literature, novel, symphony, drama",
+    "#attribute_A_words": "brother, father, uncle, grandfather, son, he, his, him",
+    "#attribute_B_words": "sister, mother, aunt, grandmother, daughter, she, hers, her"
+  },
+  "Math & Arts": {
+    "#target_X_words": "math, algebra, geometry, calculus, equations, computation, numbers, addition",
+    "#target_Y_words": "poetry, art, dance, literature, novel, symphony, drama, sculpture",
+    "#attribute_A_words": "male, man, boy, brother, he, him, his, son",
+    "#attribute_B_words": "female, woman, girl, sister, she, her, hers, daughter"
+  },
+  "Career & Family": {
+    "#target_X_words": "John, Paul, Mike, Kevin, Steve, Greg, Jeff, Bill",
+    "#target_Y_words": "Amy, Joan, Lisa, Sarah, Diana, Kate, Ann, Donna",
+    "#attribute_A_words": "executive, management, professional, corporation, salary, office, business, career",
+    "#attribute_B_words": "home, parents, children, family, cousins, marriage, wedding, relatives"
+  },
+  "European & Americans": {
+    "#target_X_words": "Brad, Brendan, Geoffrey, Greg, Brett, Jay, Matthew, Neil, Todd, Allison, Anne, Carrie, Emily, Jill, Laurie, Kristen, Meredith, Sarah ",
+    "#target_Y_words": "Darnell, Hakim, Jermaine, Kareem, Jamal, Leroy, Rasheed, Tremayne, Tyrone, Aisha, Ebony, Keisha, Kenya, Latonya, Lakisha, Latoya, Tamika, Tanisha",
+    "#attribute_A_words": "joy, love, peace, wonderful, pleasure, friend, laughter, happy",
+    "#attribute_B_words": "agony, terrible, horrible, nasty, evil, war, awful, failure"
+  }
+}
