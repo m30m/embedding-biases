@@ -1,11 +1,11 @@
 import json
-import random
 import optparse
-import pickle
-from redis import StrictRedis
+import random
+import struct
 
-from flask import Flask, request, render_template, jsonify
 import numpy as np
+from flask import Flask, request, render_template, jsonify
+from redis import StrictRedis
 
 app = Flask(__name__)
 embedding_model = None
@@ -151,7 +151,7 @@ def flaskrun(app):
                 splitted = line.split()
                 token = splitted[0]
                 dims = list(map(float, splitted[1:]))
-                redis_client.set(token, pickle.dumps(dims))
+                redis_client.set(token, struct.pack('f' * 300, *dims))
                 token_count += 1
                 if token_count % 10000 == 0:
                     print('Processed %d words' % token_count)
@@ -162,7 +162,7 @@ def flaskrun(app):
                 def get(self, word):
                     result = redis_client.get(word)
                     if result:
-                        result = pickle.loads(result)
+                        result = struct.unpack('f' * 300, result)
                     return result
 
             embedding_model = RedisStorage()
