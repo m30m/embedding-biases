@@ -174,7 +174,7 @@ def flaskrun(app):
             embedding_model = RedisStorage()
     else:
         print('Using sqlite %s' % options.sqlite_path)
-        sqlite_client = sqlite3.connect(options.sqlite_path)
+        sqlite_client = sqlite3.connect(options.sqlite_path, check_same_thread=False)
         if options.fill_db:
             if options.vectors is None:
                 print('Please specify embedding vectors path')
