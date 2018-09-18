@@ -126,6 +126,11 @@
             'attribute_A': clean_input($('#attribute_A_words')),
             'attribute_B': clean_input($('#attribute_B_words'))
         };
+        if(json_form.target_X.length!==json_form.target_Y.length)
+        {
+            alert('Target groups should have same count of words');
+            return false;
+        }
         console.log(json_form);
         $.ajax({
             url: '/weat',
