@@ -29,6 +29,21 @@
             <div class="container">
                 <div class="row">
                     <div class="col-12">
+                        <h4>About this tool:</h4>
+                        This tool measures how much bias exists in popular word embeddings which are used in various domains extensively and is based on
+                        <a href="http://opus.bath.ac.uk/55288/4/CaliskanEtAl_authors_full.pdf">this paper</a>.
+                        <br>
+                        First you should select two target word groups 1 and 2. Then you should select two attribute word groups A and B.
+                        Then we will calculate the difference between the two sets of target words in terms of their relative similarity to the two sets of attribute words.
+                        This is measured using a permutation test and if the p value is close to zero, it means that target word similarities to attribute words are different.
+                        <br>
+                        You can add words to groups by typing them in related text box and pressing Enter. Remove words from groups by clicking on them.
+                        <br>
+                        You can use the following examples for start:
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
                         <h4>Sample Word Groups:</h4>
                         <h4 id="tmpl-buttons"></h4>
                     </div>
