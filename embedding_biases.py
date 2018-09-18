@@ -1,6 +1,7 @@
 import json
 import optparse
 import random
+import sqlite3
 import struct
 
 import numpy as np
@@ -86,6 +87,7 @@ def flaskrun(app):
     default_port = "5000"
     default_storage = 'in_memory'
     default_redis_url = 'redis://localhost:6379/'
+    default_sqlite_path = 'sqlite.db'
 
     # Set up the command-line options
     parser = optparse.OptionParser()
@@ -99,19 +101,23 @@ def flaskrun(app):
                       default=default_port)
 
     parser.add_option("-S", "--storage",
-                      help="Which storage to use. in_memory or redis" + \
+                      help="Which storage to use. in_memory or redis or sqlite" + \
                            "[default %s]" % default_storage,
-                      default=default_storage, choices=['in_memory', 'redis'])
+                      default=default_storage, choices=['in_memory', 'redis', 'sqlite'])
 
     parser.add_option("-V", "--vectors",
                       help="Path to embedding file")
 
-    parser.add_option("--fill-redis", action="store_true", dest="fill_redis",
-                      help="Only fill the redis database and exit", )
+    parser.add_option("--fill-db", action="store_true", dest="fill_db",
+                      help="Only fill the database and exit", )
 
     parser.add_option("--redis-url",
                       help="Redis database url " + \
                            "[default %s]" % default_redis_url, default=default_redis_url)
+
+    parser.add_option("--sqlite-path",
+                      help="Sqlite database path " + \
+                           "[default %s]" % default_sqlite_path, default=default_sqlite_path)
 
     options, _ = parser.parse_args()
 
@@ -135,10 +141,10 @@ def flaskrun(app):
             parser.print_help()
             return None
         embedding_model = read_model(options.vectors)
-    else:
+    elif options.storage == 'redis':
         print('Using Redis %s' % options.redis_url)
         redis_client = StrictRedis.from_url(options.redis_url)
-        if options.fill_redis:
+        if options.fill_db:
             if options.vectors is None:
                 print('Please specify embedding vectors path')
                 parser.print_help()
@@ -166,6 +172,43 @@ def flaskrun(app):
                     return result
 
             embedding_model = RedisStorage()
+    else:
+        print('Using sqlite %s' % options.sqlite_path)
+        sqlite_client = sqlite3.connect(options.sqlite_path)
+        if options.fill_db:
+            if options.vectors is None:
+                print('Please specify embedding vectors path')
+                parser.print_help()
+                return None
+            print('Filling sqlite')
+            token_count = 0
+            sqlite_client.execute('CREATE TABLE embeddings (word VARCHAR PRIMARY KEY, embedding BLOB)')
+            cursor = sqlite_client.cursor()
+            for line in open(options.vectors):
+                if not line:
+                    continue
+                splitted = line.split()
+                token = splitted[0]
+                dims = list(map(float, splitted[1:]))
+                blob = struct.pack('f' * 300, *dims)
+                cursor.execute('INSERT INTO embeddings VALUES(?, ?)', (token, sqlite3.Binary(blob)))
+                token_count += 1
+                if token_count % 10000 == 0:
+                    sqlite_client.commit()
+                    print('Processed %d words' % token_count)
+            sqlite_client.commit()
+            print('Finished filling sqlite with %d words' % token_count)
+            return None
+        else:
+            class SqliteStorage(object):
+                def get(self, word):
+                    result = sqlite_client.execute('SELECT embedding FROM embeddings WHERE word = ?', (word,)).fetchone()
+                    if result:
+                        result = struct.unpack('f' * 300, result[0])
+                    return result
+
+            embedding_model = SqliteStorage()
+
 
     app.run(
         host=options.host,
