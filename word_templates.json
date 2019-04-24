@@ -1,7 +1,7 @@
 {
   "Science & Arts": {
-    "#target_X_words": "science, technology, physics, chemistry, experiment, astronomy",
-    "#target_Y_words": "poetry, art, dance, literature, novel, symphony, drama",
+    "#target_X_words": "science, technology, physics, chemistry, Einstein, NASA, experiment, astronomy",
+    "#target_Y_words": "poetry, art, Shakespeare, dance, literature, novel, symphony, drama",
     "#attribute_A_words": "brother, father, uncle, grandfather, son, he, his, him",
     "#attribute_B_words": "sister, mother, aunt, grandmother, daughter, she, hers, her"
   },
